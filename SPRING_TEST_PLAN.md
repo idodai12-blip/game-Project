@@ -5,8 +5,11 @@ This document describes the test cases for the spring functionality in the game.
 
 ## Spring Setup
 Two horizontal springs have been added to `adv-world_01.screen` at line 21:
-- Spring 1: Position (5, 17) - `###W` - 3 chars long, launches LEFT (opposite of RIGHT alignment toward wall)
-- Spring 2: Position (54, 17) - `###W` - 3 chars long, launches LEFT (opposite of RIGHT alignment toward wall)
+- Spring 1: Position (5, 17) - `###W` - 3 chars long, faces RIGHT (toward wall), launches LEFT
+- Spring 2: Position (54, 17) - `###W` - 3 chars long, faces RIGHT (toward wall), launches LEFT
+
+Spring alignment is the direction the spring faces (toward the wall).
+Launch direction is opposite to the spring alignment.
 
 ## Test Cases
 
@@ -83,9 +86,10 @@ Two horizontal springs have been added to `adv-world_01.screen` at line 21:
 ### Spring Loading
 - Springs are loaded from screen files during `Game::loadRoomsFromFiles()`
 - Horizontal sequences of '#' characters are detected
-- Spring direction is determined by checking for adjacent walls
-- If wall is on the right (e.g., `###W`), spring direction is RIGHT, launches LEFT
-- If wall is on the left (e.g., `W###`), spring direction is LEFT, launches RIGHT
+- Spring alignment (direction) is determined by checking for adjacent walls
+- If wall is on the right (e.g., `###W`), spring alignment is RIGHT (faces the wall)
+- If wall is on the left (e.g., `W###`), spring alignment is LEFT (faces the wall)
+- Launch direction is always opposite to the spring alignment
 
 ### Spring Trigger Logic
 - `Game::checkSprings()` is called each game cycle

@@ -97,9 +97,9 @@ void Game::loadRoomsFromFiles() {
                     // Choose the longer sequence
                     if (hLen > vLen) {
                         // Horizontal spring - determine direction based on walls
-                        // Check if there's a wall on the right (spring launches LEFT)
+                        // Check if there's a wall on the right (spring faces RIGHT)
                         bool wallOnRight = (x + hLen < SCREEN_WIDTH && allLines[y][x + hLen] == 'W');
-                        Direction springDir = wallOnRight ? Direction::LEFT : Direction::RIGHT;
+                        Direction springDir = wallOnRight ? Direction::RIGHT : Direction::LEFT;
                         
                         room->addElement(std::make_unique<Spring>(gamePos, springDir, hLen));
                         
@@ -109,9 +109,9 @@ void Game::loadRoomsFromFiles() {
                         }
                     } else if (vLen > 0) {
                         // Vertical spring - determine direction based on walls
-                        // Check if there's a wall below (spring launches UP)
+                        // Check if there's a wall below (spring faces DOWN)
                         bool wallBelow = (y + vLen < (int)allLines.size() && allLines[y + vLen][x] == 'W');
-                        Direction springDir = wallBelow ? Direction::UP : Direction::DOWN;
+                        Direction springDir = wallBelow ? Direction::DOWN : Direction::UP;
                         
                         room->addElement(std::make_unique<Spring>(gamePos, springDir, vLen));
                         
