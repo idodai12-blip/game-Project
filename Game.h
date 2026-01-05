@@ -16,6 +16,7 @@ private:
     std::unique_ptr<Player> player1;
     std::unique_ptr<Player> player2;
     std::vector<std::unique_ptr<Room>> rooms;
+    std::vector<Point> legendPositions;  // Legend position for each room
     int currentRoomIndex;
     bool player1ReachedEnd;
     bool player2ReachedEnd;
@@ -23,7 +24,7 @@ private:
     Riddle* activeRiddle;  // Currently active riddle
     Player* riddlePlayer;  // Player who triggered the riddle
     
-    void createRooms();
+    void loadRoomsFromFiles();
     void handlePlayerInput(Player* player, char key);  // Unified for both players
     void updatePlayer(Player* player, Player* otherPlayer);  // Unified for both players
     void checkCollisions();

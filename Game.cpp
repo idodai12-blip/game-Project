@@ -10,113 +10,145 @@
 #include "Switch.h"
 #include "Spring.h"
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <algorithm>
 
 Game::Game() 
     : currentRoomIndex(0), player1ReachedEnd(false), player2ReachedEnd(false), 
       state(GameState::MENU), activeRiddle(nullptr), riddlePlayer(nullptr) {
     player1 = std::make_unique<Player>(Point(5, 10), Chars::PLAYER1);
     player2 = std::make_unique<Player>(Point(5, 12), Chars::PLAYER2);
-    createRooms();
+    loadRoomsFromFiles();
 }
 
-void Game::createRooms() {
-    // Room 1
-    auto room1 = std::make_unique<Room>(1);
+void Game::loadRoomsFromFiles() {
+    // Find all screen files in lexicographical order
+    std::vector<std::string> screenFiles;
     
-    // Borders
-    for (int x = 0; x < SCREEN_WIDTH; x++) {
-        room1->addElement(std::make_unique<Wall>(Point(x, 0)));
-        room1->addElement(std::make_unique<Wall>(Point(x, SCREEN_HEIGHT - 1)));
-    }
-    for (int y = 1; y < SCREEN_HEIGHT - 1; y++) {
-        room1->addElement(std::make_unique<Wall>(Point(0, y)));
-        room1->addElement(std::make_unique<Wall>(Point(SCREEN_WIDTH - 1, y)));
-    }
-    
-    // Internal walls
-    for (int y = 5; y < 15; y++) {
-        room1->addElement(std::make_unique<Wall>(Point(20, y)));
+    // Look for adv-world*.screen files in the current directory
+    for (int i = 1; i <= 99; i++) {
+        std::ostringstream filename;
+        filename << "adv-world_" << (i < 10 ? "0" : "") << i << ".screen";
+        
+        std::ifstream file(filename.str());
+        if (file.good()) {
+            screenFiles.push_back(filename.str());
+        }
     }
     
-    // Items
-    room1->addElement(std::make_unique<Torch>(Point(10, 7)));
-    room1->addElement(std::make_unique<Key>(Point(25, 10)));
-    room1->addElement(std::make_unique<Obstacle>(Point(15, 10)));
-    room1->addElement(std::make_unique<Riddle>(Point(40, 10)));
-    room1->addElement(std::make_unique<Door>(Point(60, 12), 1, 2));
-    
-    rooms.push_back(std::move(room1));
-    
-    // Room 2
-    auto room2 = std::make_unique<Room>(2);
-    
-    // Borders
-    for (int x = 0; x < SCREEN_WIDTH; x++) {
-        room2->addElement(std::make_unique<Wall>(Point(x, 0)));
-        room2->addElement(std::make_unique<Wall>(Point(x, SCREEN_HEIGHT - 1)));
-    }
-    for (int y = 1; y < SCREEN_HEIGHT - 1; y++) {
-        room2->addElement(std::make_unique<Wall>(Point(0, y)));
-        room2->addElement(std::make_unique<Wall>(Point(SCREEN_WIDTH - 1, y)));
+    // If no screen files found, show error and exit
+    if (screenFiles.empty()) {
+        std::cerr << "Error: No screen files found (adv-world*.screen)" << std::endl;
+        return;
     }
     
-    // Walls that can be destroyed
-    for (int x = 30; x < 35; x++) {
-        room2->addElement(std::make_unique<Wall>(Point(x, 12)));
+    // Load each screen file
+    int roomId = 1;
+    for (const auto& filename : screenFiles) {
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            std::cerr << "Error: Could not open " << filename << std::endl;
+            continue;
+        }
+        
+        // Determine if this is the final room (last file in the list)
+        bool isFinalRoom = (roomId == (int)screenFiles.size());
+        auto room = std::make_unique<Room>(roomId, isFinalRoom);
+        
+        Point legendPos(2, 1);  // Default legend position
+        bool legendFound = false;
+        
+        // Read the file line by line
+        std::string line;
+        int y = 0;
+        while (std::getline(file, line) && y < SCREEN_HEIGHT) {
+            // Pad or truncate line to SCREEN_WIDTH
+            if (line.length() < SCREEN_WIDTH) {
+                line.resize(SCREEN_WIDTH, ' ');
+            }
+            
+            // Parse each character in the line
+            for (int x = 0; x < SCREEN_WIDTH && x < (int)line.length(); x++) {
+                char ch = line[x];
+                Point pos(x, y);
+                
+                switch (ch) {
+                    case 'W':  // Wall
+                        room->addElement(std::make_unique<Wall>(pos));
+                        break;
+                    
+                    case 'K':  // Key
+                        room->addElement(std::make_unique<Key>(pos));
+                        break;
+                    
+                    case '!':  // Torch
+                        room->addElement(std::make_unique<Torch>(pos));
+                        break;
+                    
+                    case '@':  // Bomb
+                        room->addElement(std::make_unique<Bomb>(pos));
+                        break;
+                    
+                    case '*':  // Obstacle
+                        room->addElement(std::make_unique<Obstacle>(pos));
+                        break;
+                    
+                    case 'D':  // Door (followed by room number)
+                        // Next character should be the target room number
+                        if (x + 1 < (int)line.length() && isdigit(line[x + 1])) {
+                            int targetRoom = line[x + 1] - '0';
+                            room->addElement(std::make_unique<Door>(pos, roomId, targetRoom));
+                            x++;  // Skip the next character (room number)
+                        }
+                        break;
+                    
+                    case 'L':  // Legend position marker
+                        legendPos = pos;
+                        legendFound = true;
+                        break;
+                    
+                    case ' ':  // Empty space
+                    case '.':  // Alternative empty space marker
+                        // Walkable, no element needed
+                        break;
+                    
+                    default:
+                        // Ignore unknown characters
+                        break;
+                }
+            }
+            y++;
+        }
+        
+        file.close();
+        
+        // Store legend position for this room
+        legendPositions.push_back(legendPos);
+        
+        // Add room to the game
+        rooms.push_back(std::move(room));
+        roomId++;
     }
     
-    // Items
-    room2->addElement(std::make_unique<Bomb>(Point(20, 12)));
-    room2->addElement(std::make_unique<Key>(Point(40, 12)));
-    
-    // Add switches (group 1) and switch-controlled door
-    room2->addElement(std::make_unique<Switch>(Point(15, 8), 1));
-    room2->addElement(std::make_unique<Switch>(Point(15, 16), 1));
-    room2->addElement(std::make_unique<Door>(Point(70, 12), 2, 3, 1));  // Door requires switch group 1
-    
-    rooms.push_back(std::move(room2));
-    
-    // Room 3
-    auto room3 = std::make_unique<Room>(3);
-    
-    // Borders
-    for (int x = 0; x < SCREEN_WIDTH; x++) {
-        room3->addElement(std::make_unique<Wall>(Point(x, 0)));
-        room3->addElement(std::make_unique<Wall>(Point(x, SCREEN_HEIGHT - 1)));
+    // Add a final empty room if we don't have at least one room
+    if (rooms.empty()) {
+        auto finalRoom = std::make_unique<Room>(1, true);
+        
+        // Add borders only
+        for (int x = 0; x < SCREEN_WIDTH; x++) {
+            finalRoom->addElement(std::make_unique<Wall>(Point(x, 0)));
+            finalRoom->addElement(std::make_unique<Wall>(Point(x, SCREEN_HEIGHT - 1)));
+        }
+        for (int y = 1; y < SCREEN_HEIGHT - 1; y++) {
+            finalRoom->addElement(std::make_unique<Wall>(Point(0, y)));
+            finalRoom->addElement(std::make_unique<Wall>(Point(SCREEN_WIDTH - 1, y)));
+        }
+        
+        rooms.push_back(std::move(finalRoom));
+        legendPositions.push_back(Point(2, 1));
     }
-    for (int y = 1; y < SCREEN_HEIGHT - 1; y++) {
-        room3->addElement(std::make_unique<Wall>(Point(0, y)));
-        room3->addElement(std::make_unique<Wall>(Point(SCREEN_WIDTH - 1, y)));
-    }
-    
-    // Obstacles
-    room3->addElement(std::make_unique<Obstacle>(Point(20, 10)));
-    room3->addElement(std::make_unique<Obstacle>(Point(30, 10)));
-    room3->addElement(std::make_unique<Obstacle>(Point(40, 10)));
-    
-    // Add a horizontal spring (3 chars long, facing right) adjacent to left wall
-    room3->addElement(std::make_unique<Spring>(Point(1, 15), Direction::RIGHT, 3));
-    
-    // Items
-    room3->addElement(std::make_unique<Key>(Point(50, 15)));
-    room3->addElement(std::make_unique<Door>(Point(70, 12), 3, 4));
-    
-    rooms.push_back(std::move(room3));
-    
-    // Room 4 - Final
-    auto room4 = std::make_unique<Room>(4, true);
-    
-    // Borders only
-    for (int x = 0; x < SCREEN_WIDTH; x++) {
-        room4->addElement(std::make_unique<Wall>(Point(x, 0)));
-        room4->addElement(std::make_unique<Wall>(Point(x, SCREEN_HEIGHT - 1)));
-    }
-    for (int y = 1; y < SCREEN_HEIGHT - 1; y++) {
-        room4->addElement(std::make_unique<Wall>(Point(0, y)));
-        room4->addElement(std::make_unique<Wall>(Point(SCREEN_WIDTH - 1, y)));
-    }
-    
-    rooms.push_back(std::move(room4));
 }
 
 void Game::showMenu() {
@@ -601,7 +633,10 @@ void Game::drawGame() {
     getCurrentRoom()->draw();
     player1->draw();
     player2->draw();
-    getCurrentRoom()->drawLegend(player1.get(), player2.get(), 2, 1);
+    
+    // Get legend position for current room
+    Point legendPos = legendPositions[currentRoomIndex];
+    getCurrentRoom()->drawLegend(player1.get(), player2.get(), legendPos.getX(), legendPos.getY());
 }
 
 void Game::startNewGame() {
@@ -616,9 +651,10 @@ void Game::startNewGame() {
     player1 = std::make_unique<Player>(Point(5, 10), Chars::PLAYER1);
     player2 = std::make_unique<Player>(Point(5, 12), Chars::PLAYER2);
     
-    // Recreate rooms
+    // Reload rooms from files
     rooms.clear();
-    createRooms();
+    legendPositions.clear();
+    loadRoomsFromFiles();
     
     hideCursor();
     clearScreen();
