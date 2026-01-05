@@ -58,6 +58,18 @@ public:
         return false;
     }
     
+    // Get the index of a position in the spring (0-based, -1 if not part of spring)
+    int getPositionIndex(Point pos) const {
+        Point springDir = directionToPoint(alignment);
+        for (int i = 0; i < length; i++) {
+            Point checkPos = position + Point(springDir.getX() * i, springDir.getY() * i);
+            if (checkPos == pos) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
     // Get all positions that make up this spring
     std::vector<Point> getAllPositions() const {
         std::vector<Point> positions;

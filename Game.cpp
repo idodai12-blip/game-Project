@@ -559,71 +559,45 @@ void Game::checkSprings() {
         Direction playerDir = player1->getDirection();
         Direction launchDir = getOppositeDir(springDir);
         
-        // Calculate how much spring is currently compressed
-        // This is based on how far into the spring the player has moved
-        Point springMove = directionToPoint(springDir);
-        int compressed = spring1->getCompressedLength();
+        // Get player's position index in the spring (0-based)
+        int posIndex = spring1->getPositionIndex(player1->getPosition());
         
-        // Player is on a spring
-        // Case 1: Player is moving in the spring direction (compressing more)
+        // Calculate compression: position index + 1
+        // (at position 0, compressed by 1; at position 2, compressed by 3)
+        int compressed = posIndex + 1;
+        
+        // Update spring visual compression
+        spring1->compress(compressed);
+        
+        // Determine if spring should release
+        bool shouldRelease = false;
+        
+        // Case 1: Player is moving in the spring direction
         if (playerDir == springDir) {
-            // Increment compression by counting remaining spring ahead
-            Point checkPos = player1->getPosition();
-            int additionalCompress = 0;
+            // Check if next position hits a wall or is beyond the spring
+            Point springMove = directionToPoint(springDir);
+            Point nextPos = player1->getPosition() + springMove;
             
-            // Count how many spring positions ahead
-            for (int i = 0; i < spring1->getLength(); i++) {
-                checkPos = checkPos + springMove;
-                if (spring1->isPartOfSpring(checkPos)) {
-                    additionalCompress++;
-                } else {
-                    break;
-                }
-            }
-            
-            // Total compression including current position
-            compressed = additionalCompress;
-            
-            // Check if will hit wall after moving through spring
-            Point nextAfterSpring = player1->getPosition() + Point(springMove.getX() * (additionalCompress + 1), 
-                                                                     springMove.getY() * (additionalCompress + 1));
-            bool willHitWall = room->isWall(nextAfterSpring);
-            
-            // Update spring visual compression
-            spring1->compress(compressed);
-            
-            // If player will hit wall or can't compress more, release spring
-            if (willHitWall || additionalCompress == 0) {
-                // Launch based on how much spring collapsed
-                int velocity = std::max(1, compressed);
-                int cycles = velocity * velocity;
-                player1->setSpringEffect(launchDir, velocity, cycles);
-                // Collapse all springs when launched
-                for (Spring* s : room->getSprings()) {
-                    if (s) s->release();
-                }
+            // If next position is a wall or beyond spring, release
+            if (room->isWall(nextPos) || !spring1->isPartOfSpring(nextPos)) {
+                shouldRelease = true;
             }
         }
-        // Case 2: Player stops on spring (STAY command) 
+        // Case 2: Player stops on spring (STAY command)
         else if (playerDir == Direction::NONE) {
-            // Release with current compression (if any) or minimum
-            compressed = std::max(1, spring1->getCompressedLength());
-            int velocity = compressed;
-            int cycles = velocity * velocity;
-            player1->setSpringEffect(launchDir, velocity, cycles);
-            // Collapse all springs
-            for (Spring* s : room->getSprings()) {
-                if (s) s->release();
-            }
+            shouldRelease = true;
         }
         // Case 3: Player is on spring but moving in different direction
         else {
-            // Release with current compression (if any) or minimum
-            compressed = std::max(1, spring1->getCompressedLength());
+            shouldRelease = true;
+        }
+        
+        // Release spring and launch player
+        if (shouldRelease) {
             int velocity = compressed;
             int cycles = velocity * velocity;
             player1->setSpringEffect(launchDir, velocity, cycles);
-            // Collapse all springs
+            // Collapse all springs when launched
             for (Spring* s : room->getSprings()) {
                 if (s) s->release();
             }
@@ -637,70 +611,44 @@ void Game::checkSprings() {
         Direction playerDir = player2->getDirection();
         Direction launchDir = getOppositeDir(springDir);
         
-        // Calculate how much spring is currently compressed
-        Point springMove = directionToPoint(springDir);
-        int compressed = spring2->getCompressedLength();
+        // Get player's position index in the spring (0-based)
+        int posIndex = spring2->getPositionIndex(player2->getPosition());
         
-        // Player is on a spring
-        // Case 1: Player is moving in the spring direction (compressing more)
+        // Calculate compression: position index + 1
+        int compressed = posIndex + 1;
+        
+        // Update spring visual compression
+        spring2->compress(compressed);
+        
+        // Determine if spring should release
+        bool shouldRelease = false;
+        
+        // Case 1: Player is moving in the spring direction
         if (playerDir == springDir) {
-            // Increment compression by counting remaining spring ahead
-            Point checkPos = player2->getPosition();
-            int additionalCompress = 0;
+            // Check if next position hits a wall or is beyond the spring
+            Point springMove = directionToPoint(springDir);
+            Point nextPos = player2->getPosition() + springMove;
             
-            // Count how many spring positions ahead
-            for (int i = 0; i < spring2->getLength(); i++) {
-                checkPos = checkPos + springMove;
-                if (spring2->isPartOfSpring(checkPos)) {
-                    additionalCompress++;
-                } else {
-                    break;
-                }
-            }
-            
-            // Total compression
-            compressed = additionalCompress;
-            
-            // Check if will hit wall after moving through spring
-            Point nextAfterSpring = player2->getPosition() + Point(springMove.getX() * (additionalCompress + 1), 
-                                                                     springMove.getY() * (additionalCompress + 1));
-            bool willHitWall = room->isWall(nextAfterSpring);
-            
-            // Update spring visual compression
-            spring2->compress(compressed);
-            
-            // If player will hit wall or can't compress more, release spring
-            if (willHitWall || additionalCompress == 0) {
-                // Launch based on how much spring collapsed
-                int velocity = std::max(1, compressed);
-                int cycles = velocity * velocity;
-                player2->setSpringEffect(launchDir, velocity, cycles);
-                // Collapse all springs when launched
-                for (Spring* s : room->getSprings()) {
-                    if (s) s->release();
-                }
+            // If next position is a wall or beyond spring, release
+            if (room->isWall(nextPos) || !spring2->isPartOfSpring(nextPos)) {
+                shouldRelease = true;
             }
         }
         // Case 2: Player stops on spring (STAY command)
         else if (playerDir == Direction::NONE) {
-            // Release with current compression (if any) or minimum
-            compressed = std::max(1, spring2->getCompressedLength());
-            int velocity = compressed;
-            int cycles = velocity * velocity;
-            player2->setSpringEffect(launchDir, velocity, cycles);
-            // Collapse all springs
-            for (Spring* s : room->getSprings()) {
-                if (s) s->release();
-            }
+            shouldRelease = true;
         }
         // Case 3: Player is on spring but moving in different direction
         else {
-            // Release with current compression (if any) or minimum
-            compressed = std::max(1, spring2->getCompressedLength());
+            shouldRelease = true;
+        }
+        
+        // Release spring and launch player
+        if (shouldRelease) {
             int velocity = compressed;
             int cycles = velocity * velocity;
             player2->setSpringEffect(launchDir, velocity, cycles);
-            // Collapse all springs
+            // Collapse all springs when launched
             for (Spring* s : room->getSprings()) {
                 if (s) s->release();
             }
