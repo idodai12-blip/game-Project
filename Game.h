@@ -20,16 +20,20 @@ private:
     bool player1ReachedEnd;
     bool player2ReachedEnd;
     GameState state;
+    Riddle* activeRiddle;  // Currently active riddle
+    Player* riddlePlayer;  // Player who triggered the riddle
     
     void createRooms();
     void handlePlayerInput(Player* player, char key);  // Unified for both players
     void updatePlayer(Player* player, Player* otherPlayer);  // Unified for both players
     void checkCollisions();
     void checkDoors();
+    void checkRiddles();
     void drawGame();
     void showMenu();
     void showInstructions();
     void pauseGame();
+    void drawRiddleOverlay();
     
 public:
     Game();

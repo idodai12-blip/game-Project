@@ -6,10 +6,12 @@
 #include "Torch.h"
 #include "Bomb.h"
 #include "Obstacle.h"
+#include "Riddle.h"
 #include <iostream>
 
 Game::Game() 
-    : currentRoomIndex(0), player1ReachedEnd(false), player2ReachedEnd(false), state(GameState::MENU) {
+    : currentRoomIndex(0), player1ReachedEnd(false), player2ReachedEnd(false), 
+      state(GameState::MENU), activeRiddle(nullptr), riddlePlayer(nullptr) {
     player1 = std::make_unique<Player>(Point(5, 10), Chars::PLAYER1);
     player2 = std::make_unique<Player>(Point(5, 12), Chars::PLAYER2);
     createRooms();
@@ -38,6 +40,7 @@ void Game::createRooms() {
     room1->addElement(std::make_unique<Torch>(Point(10, 7)));
     room1->addElement(std::make_unique<Key>(Point(25, 10)));
     room1->addElement(std::make_unique<Obstacle>(Point(15, 10)));
+    room1->addElement(std::make_unique<Riddle>(Point(40, 10)));
     room1->addElement(std::make_unique<Door>(Point(60, 12), 1, 2));
     
     rooms.push_back(std::move(room1));
@@ -301,7 +304,43 @@ void Game::checkDoors() {
     }
 }
 
+void Game::checkRiddles() {
+    Room* room = getCurrentRoom();
+    
+    // Check player 1
+    Riddle* riddle1 = room->getRiddleAt(player1->getPosition());
+    if (riddle1 && !riddle1->isActive()) {
+        riddle1->setActive(true);
+        activeRiddle = riddle1;
+        riddlePlayer = player1.get();
+        player1->stop();  // Stop player movement
+        return;
+    }
+    
+    // Check player 2
+    Riddle* riddle2 = room->getRiddleAt(player2->getPosition());
+    if (riddle2 && !riddle2->isActive()) {
+        riddle2->setActive(true);
+        activeRiddle = riddle2;
+        riddlePlayer = player2.get();
+        player2->stop();  // Stop player movement
+    }
+}
+
+void Game::drawRiddleOverlay() {
+    clearScreen();
+    gotoxy(30, 10);
+    std::cout << "Hello World";
+    gotoxy(30, 12);
+    std::cout << "Press 4 to solve the riddle";
+}
+
 void Game::drawGame() {
+    if (activeRiddle) {
+        drawRiddleOverlay();
+        return;
+    }
+    
     clearScreen();
     getCurrentRoom()->draw();
     player1->draw();
@@ -314,6 +353,8 @@ void Game::startNewGame() {
     currentRoomIndex = 0;
     player1ReachedEnd = false;
     player2ReachedEnd = false;
+    activeRiddle = nullptr;
+    riddlePlayer = nullptr;
     
     // Reset players
     player1 = std::make_unique<Player>(Point(5, 10), Chars::PLAYER1);
@@ -338,17 +379,36 @@ void Game::startNewGame() {
                 continue;
             }
             
-            // Try both players
-            handlePlayerInput(player1.get(), key);
-            handlePlayerInput(player2.get(), key);
+            // Handle riddle solving
+            if (activeRiddle && key == Keys::SOLVE_RIDDLE) {
+                // Move player to riddle position and remove riddle
+                if (riddlePlayer) {
+                    riddlePlayer->setPosition(activeRiddle->getPosition());
+                }
+                getCurrentRoom()->markElementAsCollected(activeRiddle);
+                activeRiddle->setActive(false);
+                activeRiddle = nullptr;
+                riddlePlayer = nullptr;
+                continue;
+            }
+            
+            // Don't process movement if riddle is active
+            if (!activeRiddle) {
+                // Try both players
+                handlePlayerInput(player1.get(), key);
+                handlePlayerInput(player2.get(), key);
+            }
         }
         
-        // Update
-        updatePlayer(player1.get(), player2.get());
-        updatePlayer(player2.get(), player1.get());
-        checkCollisions();
-        checkDoors();
-        getCurrentRoom()->updateBombs();
+        // Update (skip if riddle is active)
+        if (!activeRiddle) {
+            updatePlayer(player1.get(), player2.get());
+            updatePlayer(player2.get(), player1.get());
+            checkCollisions();
+            checkDoors();
+            checkRiddles();
+            getCurrentRoom()->updateBombs();
+        }
         
         // Draw
         drawGame();

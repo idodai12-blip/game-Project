@@ -21,6 +21,8 @@ void Room::addElement(std::unique_ptr<GameElement> element) {
         bombs.push_back(bomb);
     } else if (Obstacle* obs = dynamic_cast<Obstacle*>(rawPtr)) {
         obstacles.push_back(obs);
+    } else if (Riddle* riddle = dynamic_cast<Riddle*>(rawPtr)) {
+        riddles.push_back(riddle);
     }
 }
 
@@ -85,6 +87,20 @@ Obstacle* Room::getObstacleAt(Point pos) const {
             if (obsPos.getX() >= 0 && obsPos.getX() < SCREEN_WIDTH &&
                 obsPos.getY() >= 0 && obsPos.getY() < SCREEN_HEIGHT) {
                 return obs;
+            }
+        }
+    }
+    return nullptr;
+}
+
+Riddle* Room::getRiddleAt(Point pos) const {
+    for (Riddle* riddle : riddles) {
+        if (riddle && riddle->getPosition() == pos) {
+            // Check if riddle is on-screen (not solved)
+            Point riddlePos = riddle->getPosition();
+            if (riddlePos.getX() >= 0 && riddlePos.getX() < SCREEN_WIDTH &&
+                riddlePos.getY() >= 0 && riddlePos.getY() < SCREEN_HEIGHT) {
+                return riddle;
             }
         }
     }

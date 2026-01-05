@@ -7,6 +7,7 @@
 #include "Torch.h"
 #include "Bomb.h"
 #include "Obstacle.h"
+#include "Riddle.h"
 #include "Player.h"
 #include <vector>
 #include <memory>
@@ -21,6 +22,7 @@ private:
     std::vector<Door*> doors;
     std::vector<Bomb*> bombs;
     std::vector<Obstacle*> obstacles;
+    std::vector<Riddle*> riddles;
     
 public:
     Room(int id, bool finalRoom = false);
@@ -40,6 +42,7 @@ public:
     bool isWall(Point pos) const;
     Door* getDoorAt(Point pos) const;
     Obstacle* getObstacleAt(Point pos) const;
+    Riddle* getRiddleAt(Point pos) const;
     
     void updateBombs();
     void explodeBomb(Bomb* bomb);

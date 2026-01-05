@@ -29,6 +29,9 @@ namespace Keys {
     // System
     const char ESC = 27;
     const char HOME = 'H';
+    
+    // Riddle
+    const char SOLVE_RIDDLE = '4';
 }
 
 // Display characters
@@ -41,6 +44,9 @@ namespace Chars {
     const char TORCH = '!';
     const char BOMB = '@';
     const char OBSTACLE = '*';
+    const char RIDDLE = '?';
+    const char SWITCH = '^';
+    const char SPRING = '~';
 }
 
 // Utility functions
