@@ -260,9 +260,9 @@ void Room::drawLegend(Player* p1, Player* p2, int x, int y, int lives, int score
         std::cout << "-";
     }
     
-    gotoxy(x + 20, y);
+    gotoxy(x, y + 1);
     std::cout << "Life: " << lives;
     
-    gotoxy(x + 35, y);
+    gotoxy(x, y + 2);
     std::cout << "Score: " << score;
 }
