@@ -12,6 +12,6 @@ GameElement* Player::disposeItem() {
 }
 
 void Player::draw() const {
-    gotoxy(position.getX(), position.getY());
+    gotoxy(position.getX(), position.getY() + SCREEN_OFFSET_Y);
     std::cout << symbol;
 }
