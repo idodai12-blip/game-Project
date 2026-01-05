@@ -56,6 +56,9 @@ public:
     void explodeBomb(Bomb* bomb);
     bool tryPushObstacle(Obstacle* obs, Direction dir);
     
+    // Get all springs (for collapsing all springs at once)
+    const std::vector<Spring*>& getSprings() const { return springs; }
+    
     void draw() const;
     void drawLegend(Player* p1, Player* p2, int x, int y) const;
 };
