@@ -14,7 +14,7 @@ private:
     
 public:
     Spring(Point pos, Direction dir, int springLength) 
-        : GameElement(pos, '~'), alignment(dir), length(springLength), 
+        : GameElement(pos, '#'), alignment(dir), length(springLength), 
           compressedLength(0), isCompressed(false) {}
     
     bool canPlayerPass() const override { return true; }

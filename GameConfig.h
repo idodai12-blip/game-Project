@@ -45,8 +45,9 @@ namespace Chars {
     const char BOMB = '@';
     const char OBSTACLE = '*';
     const char RIDDLE = '?';
-    const char SWITCH = '^';
-    const char SPRING = '~';
+    const char SWITCH_OFF = '\\';
+    const char SWITCH_ON = '/';
+    const char SPRING = '#';
 }
 
 // Utility functions

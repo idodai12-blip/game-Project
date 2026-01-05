@@ -170,9 +170,9 @@ void Game::showInstructions() {
     gotoxy(5, 14);
     std::cout << "Riddles (?) - Press 4 to solve and pass through";
     gotoxy(5, 15);
-    std::cout << "Switches (^/+) - Step on them to toggle, open doors when all ON";
+    std::cout << "Switches (\\//) - Step on them to toggle, open doors when all ON";
     gotoxy(5, 16);
-    std::cout << "Springs (~) - Launch you in their direction when compressed";
+    std::cout << "Springs (#) - Launch you in their direction when compressed";
     gotoxy(5, 18);
     std::cout << "Press any key to continue...";
     _getch();
