@@ -17,7 +17,8 @@
 
 Game::Game() 
     : currentRoomIndex(0), player1ReachedEnd(false), player2ReachedEnd(false), 
-      state(GameState::MENU), activeRiddle(nullptr), riddlePlayer(nullptr) {
+      state(GameState::MENU), activeRiddle(nullptr), riddlePlayer(nullptr),
+      lives(3), score(0) {
     player1 = std::make_unique<Player>(Point(5, 10), Chars::PLAYER1);
     player2 = std::make_unique<Player>(Point(5, 12), Chars::PLAYER2);
     loadRoomsFromFiles();
@@ -428,6 +429,7 @@ void Game::checkDoors() {
             
             player1->disposeItem();  // Use key
             currentRoomIndex++;
+            score += 100;  // Add 100 points for moving to new room
             if (currentRoomIndex >= (int)rooms.size()) {
                 currentRoomIndex = rooms.size() - 1;
             }
@@ -451,6 +453,7 @@ void Game::checkDoors() {
             
             player2->disposeItem();  // Use key
             currentRoomIndex++;
+            score += 100;  // Add 100 points for moving to new room
             if (currentRoomIndex >= (int)rooms.size()) {
                 currentRoomIndex = rooms.size() - 1;
             }
@@ -649,7 +652,7 @@ void Game::drawGame() {
     
     // Get legend position for current room
     Point legendPos = legendPositions[currentRoomIndex];
-    getCurrentRoom()->drawLegend(player1.get(), player2.get(), legendPos.getX(), legendPos.getY());
+    getCurrentRoom()->drawLegend(player1.get(), player2.get(), legendPos.getX(), legendPos.getY(), lives, score);
 }
 
 void Game::startNewGame() {
@@ -659,6 +662,8 @@ void Game::startNewGame() {
     player2ReachedEnd = false;
     activeRiddle = nullptr;
     riddlePlayer = nullptr;
+    lives = 3;
+    score = 0;
     
     // Reset players
     player1 = std::make_unique<Player>(Point(5, 10), Chars::PLAYER1);
@@ -673,7 +678,7 @@ void Game::startNewGame() {
     clearScreen();
     
     // Game loop
-    while (state == GameState::PLAYING && !(player1ReachedEnd && player2ReachedEnd)) {
+    while (state == GameState::PLAYING && !(player1ReachedEnd && player2ReachedEnd) && lives > 0) {
         // Input
         if (_kbhit()) {
             char key = toUpperCase(_getch());
@@ -684,16 +689,24 @@ void Game::startNewGame() {
                 continue;
             }
             
-            // Handle riddle solving
-            if (activeRiddle && key == Keys::SOLVE_RIDDLE) {
-                // Move player to riddle position and remove riddle
-                if (riddlePlayer) {
-                    riddlePlayer->setPosition(activeRiddle->getPosition());
+            // Handle riddle solving - accept any key as answer
+            if (activeRiddle) {
+                if (key == Keys::SOLVE_RIDDLE) {
+                    // Correct answer - Move player to riddle position and remove riddle
+                    if (riddlePlayer) {
+                        riddlePlayer->setPosition(activeRiddle->getPosition());
+                    }
+                    getCurrentRoom()->markElementAsCollected(activeRiddle);
+                    activeRiddle->setActive(false);
+                    activeRiddle = nullptr;
+                    riddlePlayer = nullptr;
+                } else {
+                    // Wrong answer - reduce life
+                    lives--;
+                    activeRiddle->setActive(false);
+                    activeRiddle = nullptr;
+                    riddlePlayer = nullptr;
                 }
-                getCurrentRoom()->markElementAsCollected(activeRiddle);
-                activeRiddle->setActive(false);
-                activeRiddle = nullptr;
-                riddlePlayer = nullptr;
                 continue;
             }
             
@@ -724,11 +737,19 @@ void Game::startNewGame() {
         Sleep(GAME_CYCLE_DELAY);
     }
     
-    // Victory
+    // Victory or Game Over
+    clearScreen();
     if (player1ReachedEnd && player2ReachedEnd) {
-        clearScreen();
-        gotoxy(30, 12);
+        gotoxy(30, 11);
         std::cout << "CONGRATULATIONS! YOU WON!";
+        gotoxy(30, 12);
+        std::cout << "Final Score: " << score;
+        Sleep(3000);
+    } else if (lives <= 0) {
+        gotoxy(30, 11);
+        std::cout << "GAME OVER! You ran out of lives!";
+        gotoxy(30, 12);
+        std::cout << "Final Score: " << score;
         Sleep(3000);
     }
     

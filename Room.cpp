@@ -243,7 +243,7 @@ void Room::draw() const {
     }
 }
 
-void Room::drawLegend(Player* p1, Player* p2, int x, int y) const {
+void Room::drawLegend(Player* p1, Player* p2, int x, int y, int lives, int score) const {
     gotoxy(x, y);
     std::cout << "P1: ";
     if (p1->hasItem()) {
@@ -259,4 +259,10 @@ void Room::drawLegend(Player* p1, Player* p2, int x, int y) const {
     } else {
         std::cout << "-";
     }
+    
+    gotoxy(x + 20, y);
+    std::cout << "Life: " << lives;
+    
+    gotoxy(x + 35, y);
+    std::cout << "Score: " << score;
 }
