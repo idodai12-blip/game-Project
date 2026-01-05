@@ -472,6 +472,11 @@ void Game::checkSprings() {
                 }
             }
             
+            // Compress the spring visually
+            if (compressed > 0) {
+                spring1->compress(compressed);
+            }
+            
             // Check if next position after spring compression is a wall or stay command
             Point nextAfterSpring = player1->getPosition() + Point(springMove.getX() * (compressed + 1), 
                                                                      springMove.getY() * (compressed + 1));
@@ -515,6 +520,11 @@ void Game::checkSprings() {
                 if (room->isWall(checkPos)) {
                     break;
                 }
+            }
+            
+            // Compress the spring visually
+            if (compressed > 0) {
+                spring2->compress(compressed);
             }
             
             // Check if next position after spring compression is a wall or stay command
