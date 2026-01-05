@@ -111,6 +111,28 @@ void Game::loadRoomsFromFiles() {
                         }
                         break;
                     
+                    case '?':  // Riddle
+                        if (y >= SCREEN_OFFSET_Y) {
+                            room->addElement(std::make_unique<Riddle>(gamePos));
+                        }
+                        break;
+                    
+                    case '\\':  // Switch (OFF state)
+                    case '/':   // Switch (ON state) - treat same as OFF initially
+                        if (y >= SCREEN_OFFSET_Y) {
+                            // For now, all switches belong to group 0
+                            room->addElement(std::make_unique<Switch>(gamePos, 0));
+                        }
+                        break;
+                    
+                    case '#':  // Spring
+                        if (y >= SCREEN_OFFSET_Y) {
+                            // Determine spring direction based on surrounding springs
+                            // For now, create horizontal spring (will be adjusted later)
+                            room->addElement(std::make_unique<Spring>(gamePos, Direction::RIGHT, 1));
+                        }
+                        break;
+                    
                     case 'L':  // Legend position marker (keep file coordinates)
                         legendPos = pos;
                         legendFound = true;
@@ -428,13 +450,18 @@ void Game::checkDoors() {
             }
             
             player1->disposeItem();  // Use key
+            
+            // Check if we're in the final room before advancing
+            if (getCurrentRoom()->getIsFinalRoom()) {
+                player1ReachedEnd = true;
+                player1->stop();
+                return;  // Player finished the game
+            }
+            
             currentRoomIndex++;
             score += 100;  // Add 100 points for moving to new room
             if (currentRoomIndex >= (int)rooms.size()) {
                 currentRoomIndex = rooms.size() - 1;
-            }
-            if (getCurrentRoom()->getIsFinalRoom()) {
-                player1ReachedEnd = true;
             }
             player1->setPosition(Point(5, 10));
             player1->stop();
@@ -452,13 +479,18 @@ void Game::checkDoors() {
             }
             
             player2->disposeItem();  // Use key
+            
+            // Check if we're in the final room before advancing
+            if (getCurrentRoom()->getIsFinalRoom()) {
+                player2ReachedEnd = true;
+                player2->stop();
+                return;  // Player finished the game
+            }
+            
             currentRoomIndex++;
             score += 100;  // Add 100 points for moving to new room
             if (currentRoomIndex >= (int)rooms.size()) {
                 currentRoomIndex = rooms.size() - 1;
-            }
-            if (getCurrentRoom()->getIsFinalRoom()) {
-                player2ReachedEnd = true;
             }
             player2->setPosition(Point(5, 12));
             player2->stop();
