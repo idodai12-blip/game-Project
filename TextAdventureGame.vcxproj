@@ -63,6 +63,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
+    <None Include="adv-world_01.screen" />
+    <None Include="adv-world_02.screen" />
+    <None Include="adv-world_03.screen" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
