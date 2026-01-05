@@ -442,7 +442,7 @@ void Game::checkDoors() {
     
     // Check player 1
     Door* door1 = room->getDoorAt(player1->getPosition());
-    if (door1 && player1->hasItem()) {
+    if (door1 && player1->hasItem() && !player1ReachedEnd) {  // Don't check if already finished
         if (dynamic_cast<Key*>(player1->getHeldItem())) {
             // Check if switches are activated for this door
             if (!room->areSwitchesActivated(door1->getSwitchGroupId())) {
@@ -471,7 +471,7 @@ void Game::checkDoors() {
     
     // Check player 2
     Door* door2 = room->getDoorAt(player2->getPosition());
-    if (door2 && player2->hasItem()) {
+    if (door2 && player2->hasItem() && !player2ReachedEnd) {  // Don't check if already finished
         if (dynamic_cast<Key*>(player2->getHeldItem())) {
             // Check if switches are activated for this door
             if (!room->areSwitchesActivated(door2->getSwitchGroupId())) {
