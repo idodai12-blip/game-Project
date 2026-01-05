@@ -367,8 +367,17 @@ void Game::updatePlayer(Player* player, Player* otherPlayer) {
                 }
                 
                 // Check walkability
-                if (room->isPositionWalkable(nextPos) && room->getElementAt(nextPos) == nullptr) {
-                    player->setPosition(nextPos);
+                if (room->isPositionWalkable(nextPos)) {
+                    GameElement* elem = room->getElementAt(nextPos);
+                    // Allow moving through springs and empty spaces
+                    if (elem == nullptr || elem->canPlayerPass()) {
+                        player->setPosition(nextPos);
+                    } else {
+                        // Hit obstacle, stop
+                        player->stop();
+                        player->clearSpringEffect();
+                        return;
+                    }
                 } else {
                     // Hit obstacle, stop
                     player->stop();
@@ -404,8 +413,17 @@ void Game::updatePlayer(Player* player, Player* otherPlayer) {
             }
             
             // Check walkability
-            if (room->isPositionWalkable(nextPos) && room->getElementAt(nextPos) == nullptr) {
-                player->setPosition(nextPos);
+            if (room->isPositionWalkable(nextPos)) {
+                GameElement* elem = room->getElementAt(nextPos);
+                // Allow moving through springs and empty spaces
+                if (elem == nullptr || elem->canPlayerPass()) {
+                    player->setPosition(nextPos);
+                } else {
+                    // Hit obstacle, stop
+                    player->stop();
+                    player->clearSpringEffect();
+                    return;
+                }
             } else {
                 // Hit obstacle, stop
                 player->stop();
@@ -572,15 +590,16 @@ void Game::checkSprings() {
             compressed = spring1->getLength() - posIndex;
         }
         
-        // Update spring visual compression
-        spring1->compress(compressed);
+        // Update spring visual compression if player is moving in spring direction
+        if (playerDir == springDir) {
+            spring1->compress(compressed);
+        }
         
         // Determine if spring should release
         bool shouldRelease = false;
         
-        // Case 1: Player is moving in the spring direction
+        // Case 1: Player is moving in spring direction and hits obstacle
         if (playerDir == springDir) {
-            // Check if next position hits a wall or is beyond the spring
             Point springMove = directionToPoint(springDir);
             Point nextPos = player1->getPosition() + springMove;
             
@@ -589,12 +608,8 @@ void Game::checkSprings() {
                 shouldRelease = true;
             }
         }
-        // Case 2: Player stops on spring (STAY command)
-        else if (playerDir == Direction::NONE) {
-            shouldRelease = true;
-        }
-        // Case 3: Player is on spring but moving in different direction
-        else {
+        // Case 2 & 3: Player stops or changes direction AFTER compressing spring
+        else if (spring1->getCompressedLength() > 0) {
             shouldRelease = true;
         }
         
@@ -630,15 +645,16 @@ void Game::checkSprings() {
             compressed = spring2->getLength() - posIndex;
         }
         
-        // Update spring visual compression
-        spring2->compress(compressed);
+        // Update spring visual compression if player is moving in spring direction
+        if (playerDir == springDir) {
+            spring2->compress(compressed);
+        }
         
         // Determine if spring should release
         bool shouldRelease = false;
         
-        // Case 1: Player is moving in the spring direction
+        // Case 1: Player is moving in spring direction and hits obstacle
         if (playerDir == springDir) {
-            // Check if next position hits a wall or is beyond the spring
             Point springMove = directionToPoint(springDir);
             Point nextPos = player2->getPosition() + springMove;
             
@@ -647,12 +663,8 @@ void Game::checkSprings() {
                 shouldRelease = true;
             }
         }
-        // Case 2: Player stops on spring (STAY command)
-        else if (playerDir == Direction::NONE) {
-            shouldRelease = true;
-        }
-        // Case 3: Player is on spring but moving in different direction
-        else {
+        // Case 2 & 3: Player stops or changes direction AFTER compressing spring
+        else if (spring2->getCompressedLength() > 0) {
             shouldRelease = true;
         }
         

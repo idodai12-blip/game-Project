@@ -24,8 +24,15 @@ public:
         Point springDir = directionToPoint(alignment);
         int displayLength = isCompressed ? (length - compressedLength) : length;
         
+        // For RIGHT/DOWN springs, collapse from the left (start drawing from offset)
+        // For LEFT/UP springs, collapse from the right (reduce length)
+        int startOffset = 0;
+        if (isCompressed && (alignment == Direction::RIGHT || alignment == Direction::DOWN)) {
+            startOffset = compressedLength;
+        }
+        
         for (int i = 0; i < displayLength; i++) {
-            Point drawPos = position + Point(springDir.getX() * i, springDir.getY() * i);
+            Point drawPos = position + Point(springDir.getX() * (i + startOffset), springDir.getY() * (i + startOffset));
             gotoxy(drawPos.getX(), drawPos.getY() + SCREEN_OFFSET_Y);
             std::cout << displayChar;
         }
