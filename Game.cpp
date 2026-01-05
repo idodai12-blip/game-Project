@@ -111,6 +111,28 @@ void Game::loadRoomsFromFiles() {
                         }
                         break;
                     
+                    case '?':  // Riddle
+                        if (y >= SCREEN_OFFSET_Y) {
+                            room->addElement(std::make_unique<Riddle>(gamePos));
+                        }
+                        break;
+                    
+                    case '\\':  // Switch (OFF state)
+                    case '/':   // Switch (ON state) - treat same as OFF initially
+                        if (y >= SCREEN_OFFSET_Y) {
+                            // For now, all switches belong to group 0
+                            room->addElement(std::make_unique<Switch>(gamePos, 0));
+                        }
+                        break;
+                    
+                    case '#':  // Spring
+                        if (y >= SCREEN_OFFSET_Y) {
+                            // Determine spring direction based on surrounding springs
+                            // For now, create horizontal spring (will be adjusted later)
+                            room->addElement(std::make_unique<Spring>(gamePos, Direction::RIGHT, 1));
+                        }
+                        break;
+                    
                     case 'L':  // Legend position marker (keep file coordinates)
                         legendPos = pos;
                         legendFound = true;
@@ -420,7 +442,7 @@ void Game::checkDoors() {
     
     // Check player 1
     Door* door1 = room->getDoorAt(player1->getPosition());
-    if (door1 && player1->hasItem()) {
+    if (door1 && player1->hasItem() && !player1ReachedEnd) {  // Don't check if already finished
         if (dynamic_cast<Key*>(player1->getHeldItem())) {
             // Check if switches are activated for this door
             if (!room->areSwitchesActivated(door1->getSwitchGroupId())) {
@@ -428,13 +450,18 @@ void Game::checkDoors() {
             }
             
             player1->disposeItem();  // Use key
+            
+            // Check if we're in the final room before advancing
+            if (getCurrentRoom()->getIsFinalRoom()) {
+                player1ReachedEnd = true;
+                player1->stop();
+                return;  // Player finished the game
+            }
+            
             currentRoomIndex++;
             score += 100;  // Add 100 points for moving to new room
             if (currentRoomIndex >= (int)rooms.size()) {
                 currentRoomIndex = rooms.size() - 1;
-            }
-            if (getCurrentRoom()->getIsFinalRoom()) {
-                player1ReachedEnd = true;
             }
             player1->setPosition(Point(5, 10));
             player1->stop();
@@ -444,7 +471,7 @@ void Game::checkDoors() {
     
     // Check player 2
     Door* door2 = room->getDoorAt(player2->getPosition());
-    if (door2 && player2->hasItem()) {
+    if (door2 && player2->hasItem() && !player2ReachedEnd) {  // Don't check if already finished
         if (dynamic_cast<Key*>(player2->getHeldItem())) {
             // Check if switches are activated for this door
             if (!room->areSwitchesActivated(door2->getSwitchGroupId())) {
@@ -452,13 +479,18 @@ void Game::checkDoors() {
             }
             
             player2->disposeItem();  // Use key
+            
+            // Check if we're in the final room before advancing
+            if (getCurrentRoom()->getIsFinalRoom()) {
+                player2ReachedEnd = true;
+                player2->stop();
+                return;  // Player finished the game
+            }
+            
             currentRoomIndex++;
             score += 100;  // Add 100 points for moving to new room
             if (currentRoomIndex >= (int)rooms.size()) {
                 currentRoomIndex = rooms.size() - 1;
-            }
-            if (getCurrentRoom()->getIsFinalRoom()) {
-                player2ReachedEnd = true;
             }
             player2->setPosition(Point(5, 12));
             player2->stop();
