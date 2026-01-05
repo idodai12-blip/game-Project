@@ -24,9 +24,16 @@ public:
         Point springDir = directionToPoint(alignment);
         int displayLength = isCompressed ? (length - compressedLength) : length;
         
+        // For RIGHT/DOWN springs, collapse from the left (start drawing from offset)
+        // For LEFT/UP springs, collapse from the right (reduce length)
+        int startOffset = 0;
+        if (isCompressed && (alignment == Direction::RIGHT || alignment == Direction::DOWN)) {
+            startOffset = compressedLength;
+        }
+        
         for (int i = 0; i < displayLength; i++) {
-            Point drawPos = position + Point(springDir.getX() * i, springDir.getY() * i);
-            gotoxy(drawPos.getX(), drawPos.getY());
+            Point drawPos = position + Point(springDir.getX() * (i + startOffset), springDir.getY() * (i + startOffset));
+            gotoxy(drawPos.getX(), drawPos.getY() + SCREEN_OFFSET_Y);
             std::cout << displayChar;
         }
     }
@@ -56,6 +63,18 @@ public:
             }
         }
         return false;
+    }
+    
+    // Get the index of a position in the spring (0-based, -1 if not part of spring)
+    int getPositionIndex(Point pos) const {
+        Point springDir = directionToPoint(alignment);
+        for (int i = 0; i < length; i++) {
+            Point checkPos = position + Point(springDir.getX() * i, springDir.getY() * i);
+            if (checkPos == pos) {
+                return i;
+            }
+        }
+        return -1;
     }
     
     // Get all positions that make up this spring
