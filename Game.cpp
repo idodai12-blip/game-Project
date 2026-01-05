@@ -562,9 +562,15 @@ void Game::checkSprings() {
         // Get player's position index in the spring (0-based)
         int posIndex = spring1->getPositionIndex(player1->getPosition());
         
-        // Calculate compression: position index + 1
-        // (at position 0, compressed by 1; at position 2, compressed by 3)
-        int compressed = posIndex + 1;
+        // Calculate compression based on spring alignment
+        // For RIGHT-facing springs: player compresses from left, compression increases with index
+        // For LEFT-facing springs: player compresses from right, compression decreases with index
+        int compressed;
+        if (springDir == Direction::RIGHT || springDir == Direction::DOWN) {
+            compressed = posIndex + 1;
+        } else { // LEFT or UP
+            compressed = spring1->getLength() - posIndex;
+        }
         
         // Update spring visual compression
         spring1->compress(compressed);
@@ -614,8 +620,15 @@ void Game::checkSprings() {
         // Get player's position index in the spring (0-based)
         int posIndex = spring2->getPositionIndex(player2->getPosition());
         
-        // Calculate compression: position index + 1
-        int compressed = posIndex + 1;
+        // Calculate compression based on spring alignment
+        // For RIGHT-facing springs: player compresses from left, compression increases with index
+        // For LEFT-facing springs: player compresses from right, compression decreases with index
+        int compressed;
+        if (springDir == Direction::RIGHT || springDir == Direction::DOWN) {
+            compressed = posIndex + 1;
+        } else { // LEFT or UP
+            compressed = spring2->getLength() - posIndex;
+        }
         
         // Update spring visual compression
         spring2->compress(compressed);
