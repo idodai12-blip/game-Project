@@ -57,5 +57,5 @@ public:
     bool tryPushObstacle(Obstacle* obs, Direction dir);
     
     void draw() const;
-    void drawLegend(Player* p1, Player* p2, int x, int y) const;
+    void drawLegend(Player* p1, Player* p2, int x, int y, int lives, int score) const;
 };

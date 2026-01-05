@@ -23,6 +23,8 @@ private:
     GameState state;
     Riddle* activeRiddle;  // Currently active riddle
     Player* riddlePlayer;  // Player who triggered the riddle
+    int lives;  // Player lives
+    int score;  // Game score
     
     void loadRoomsFromFiles();
     void handlePlayerInput(Player* player, char key);  // Unified for both players
