@@ -94,8 +94,8 @@ void Game::createRooms() {
     room3->addElement(std::make_unique<Obstacle>(Point(30, 10)));
     room3->addElement(std::make_unique<Obstacle>(Point(40, 10)));
     
-    // Add a horizontal spring (3 chars long, facing right)
-    room3->addElement(std::make_unique<Spring>(Point(10, 15), Direction::RIGHT, 3));
+    // Add a horizontal spring (3 chars long, facing right) adjacent to left wall
+    room3->addElement(std::make_unique<Spring>(Point(1, 15), Direction::RIGHT, 3));
     
     // Items
     room3->addElement(std::make_unique<Key>(Point(50, 15)));
