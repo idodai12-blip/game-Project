@@ -60,10 +60,11 @@ void Game::loadRoomsFromFiles() {
         Point legendPos(2, 1);  // Default legend position
         bool legendFound = false;
         
-        // Read the file line by line
+        // Read the file line by line (28 lines: 3 for legend area + 25 for game area)
         std::string line;
         int y = 0;
-        while (std::getline(file, line) && y < SCREEN_HEIGHT) {
+        const int TOTAL_LINES = SCREEN_OFFSET_Y + SCREEN_HEIGHT;  // 3 + 25 = 28
+        while (std::getline(file, line) && y < TOTAL_LINES) {
             // Pad or truncate line to SCREEN_WIDTH
             if (line.length() < SCREEN_WIDTH) {
                 line.resize(SCREEN_WIDTH, ' ');
@@ -74,37 +75,42 @@ void Game::loadRoomsFromFiles() {
                 char ch = line[x];
                 Point pos(x, y);
                 
+                // For game elements in the game area (y >= SCREEN_OFFSET_Y), 
+                // adjust position to game coordinates (0-24)
+                Point gamePos(x, y >= SCREEN_OFFSET_Y ? y - SCREEN_OFFSET_Y : y);
+                
                 switch (ch) {
                     case 'W':  // Wall
-                        room->addElement(std::make_unique<Wall>(pos));
-                        break;
-                    
-                    case 'K':  // Key
-                        room->addElement(std::make_unique<Key>(pos));
-                        break;
-                    
-                    case '!':  // Torch
-                        room->addElement(std::make_unique<Torch>(pos));
-                        break;
-                    
-                    case '@':  // Bomb
-                        room->addElement(std::make_unique<Bomb>(pos));
-                        break;
-                    
-                    case '*':  // Obstacle
-                        room->addElement(std::make_unique<Obstacle>(pos));
-                        break;
-                    
-                    case 'D':  // Door (followed by room number)
-                        // Next character should be the target room number
-                        if (x + 1 < (int)line.length() && isdigit(line[x + 1])) {
-                            int targetRoom = line[x + 1] - '0';
-                            room->addElement(std::make_unique<Door>(pos, roomId, targetRoom));
-                            x++;  // Skip the next character (room number)
+                        if (y >= SCREEN_OFFSET_Y) {
+                            room->addElement(std::make_unique<Wall>(gamePos));
                         }
                         break;
                     
-                    case 'L':  // Legend position marker
+                    case 'K':  // Key
+                        if (y >= SCREEN_OFFSET_Y) {
+                            room->addElement(std::make_unique<Key>(gamePos));
+                        }
+                        break;
+                    
+                    case '!':  // Torch
+                        if (y >= SCREEN_OFFSET_Y) {
+                            room->addElement(std::make_unique<Torch>(gamePos));
+                        }
+                        break;
+                    
+                    case '@':  // Bomb
+                        if (y >= SCREEN_OFFSET_Y) {
+                            room->addElement(std::make_unique<Bomb>(gamePos));
+                        }
+                        break;
+                    
+                    case '*':  // Obstacle
+                        if (y >= SCREEN_OFFSET_Y) {
+                            room->addElement(std::make_unique<Obstacle>(gamePos));
+                        }
+                        break;
+                    
+                    case 'L':  // Legend position marker (keep file coordinates)
                         legendPos = pos;
                         legendFound = true;
                         break;
@@ -115,7 +121,14 @@ void Game::loadRoomsFromFiles() {
                         break;
                     
                     default:
-                        // Ignore unknown characters
+                        // Check if it's a door number (1-9)
+                        if (ch >= '1' && ch <= '9') {
+                            if (y >= SCREEN_OFFSET_Y) {
+                                int targetRoom = ch - '0';
+                                room->addElement(std::make_unique<Door>(gamePos, roomId, targetRoom));
+                            }
+                        }
+                        // Otherwise ignore unknown characters
                         break;
                 }
             }
