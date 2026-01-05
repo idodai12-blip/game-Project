@@ -1,0 +1,38 @@
+## Visual Studio Temporary Files and Build Outputs
+.vs/
+[Bb]in/
+[Oo]bj/
+out/
+Generated\ Files/
+
+## User-specific files
+*.user
+*.userosscache
+*.sln.docstates
+
+## Roslyn / Analyzer / Copilot cache
+.utest/
+.library/
+CopilotIndices/
+
+## SQL Server files (if using LocalDB)
+*.mdf
+*.ldf
+
+## Others
+Thumbs.db
+desktop.ini
+
+# Build folders
+[Xx]64/
+[Xx]86/
+[Dd]ebug/
+[Rr]elease/
+
+# Intermediate and Output files
+*.exe
+*.pdb
+*.obj
+*.ilk
+*.tlog
+*.lastbuildstate

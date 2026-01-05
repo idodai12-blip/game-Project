@@ -45,6 +45,9 @@
     <ClInclude Include="Direction.h" />
     <ClInclude Include="GameConfig.h" />
     <ClInclude Include="GameElement.h" />
+    <ClInclude Include="Riddle.h" />
+    <ClInclude Include="Spring.h" />
+    <ClInclude Include="Switch.h" />
     <ClInclude Include="Wall.h" />
     <ClInclude Include="Key.h" />
     <ClInclude Include="Door.h" />
