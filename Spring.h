@@ -26,7 +26,7 @@ public:
         
         for (int i = 0; i < displayLength; i++) {
             Point drawPos = position + Point(springDir.getX() * i, springDir.getY() * i);
-            gotoxy(drawPos.getX(), drawPos.getY());
+            gotoxy(drawPos.getX(), drawPos.getY() + SCREEN_OFFSET_Y);
             std::cout << displayChar;
         }
     }
