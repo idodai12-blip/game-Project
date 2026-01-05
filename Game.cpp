@@ -7,6 +7,7 @@
 #include "Bomb.h"
 #include "Obstacle.h"
 #include "Riddle.h"
+#include "Switch.h"
 #include <iostream>
 
 Game::Game() 
@@ -66,7 +67,11 @@ void Game::createRooms() {
     // Items
     room2->addElement(std::make_unique<Bomb>(Point(20, 12)));
     room2->addElement(std::make_unique<Key>(Point(40, 12)));
-    room2->addElement(std::make_unique<Door>(Point(70, 12), 2, 3));
+    
+    // Add switches (group 1) and switch-controlled door
+    room2->addElement(std::make_unique<Switch>(Point(15, 8), 1));
+    room2->addElement(std::make_unique<Switch>(Point(15, 16), 1));
+    room2->addElement(std::make_unique<Door>(Point(70, 12), 2, 3, 1));  // Door requires switch group 1
     
     rooms.push_back(std::move(room2));
     
@@ -272,6 +277,11 @@ void Game::checkDoors() {
     Door* door1 = room->getDoorAt(player1->getPosition());
     if (door1 && player1->hasItem()) {
         if (dynamic_cast<Key*>(player1->getHeldItem())) {
+            // Check if switches are activated for this door
+            if (!room->areSwitchesActivated(door1->getSwitchGroupId())) {
+                return;  // Door is locked by switches
+            }
+            
             player1->disposeItem();  // Use key
             currentRoomIndex++;
             if (currentRoomIndex >= (int)rooms.size()) {
@@ -290,6 +300,11 @@ void Game::checkDoors() {
     Door* door2 = room->getDoorAt(player2->getPosition());
     if (door2 && player2->hasItem()) {
         if (dynamic_cast<Key*>(player2->getHeldItem())) {
+            // Check if switches are activated for this door
+            if (!room->areSwitchesActivated(door2->getSwitchGroupId())) {
+                return;  // Door is locked by switches
+            }
+            
             player2->disposeItem();  // Use key
             currentRoomIndex++;
             if (currentRoomIndex >= (int)rooms.size()) {
@@ -300,6 +315,27 @@ void Game::checkDoors() {
             }
             player2->setPosition(Point(5, 12));
             player2->stop();
+        }
+    }
+}
+
+void Game::checkSwitches() {
+    Room* room = getCurrentRoom();
+    
+    // Check player 1 position (only toggle when stepping onto a switch)
+    // We check if player moved this frame by checking direction
+    if (player1->getDirection() != Direction::NONE) {
+        Switch* sw1 = room->getSwitchAt(player1->getPosition());
+        if (sw1) {
+            sw1->toggle();
+        }
+    }
+    
+    // Check player 2
+    if (player2->getDirection() != Direction::NONE) {
+        Switch* sw2 = room->getSwitchAt(player2->getPosition());
+        if (sw2) {
+            sw2->toggle();
         }
     }
 }
@@ -404,6 +440,7 @@ void Game::startNewGame() {
         if (!activeRiddle) {
             updatePlayer(player1.get(), player2.get());
             updatePlayer(player2.get(), player1.get());
+            checkSwitches();
             checkCollisions();
             checkDoors();
             checkRiddles();

@@ -23,6 +23,8 @@ void Room::addElement(std::unique_ptr<GameElement> element) {
         obstacles.push_back(obs);
     } else if (Riddle* riddle = dynamic_cast<Riddle*>(rawPtr)) {
         riddles.push_back(riddle);
+    } else if (Switch* sw = dynamic_cast<Switch*>(rawPtr)) {
+        switches.push_back(sw);
     }
 }
 
@@ -105,6 +107,42 @@ Riddle* Room::getRiddleAt(Point pos) const {
         }
     }
     return nullptr;
+}
+
+Switch* Room::getSwitchAt(Point pos) const {
+    for (Switch* sw : switches) {
+        if (sw && sw->getPosition() == pos) {
+            // Check if switch is on-screen (not destroyed)
+            Point switchPos = sw->getPosition();
+            if (switchPos.getX() >= 0 && switchPos.getX() < SCREEN_WIDTH &&
+                switchPos.getY() >= 0 && switchPos.getY() < SCREEN_HEIGHT) {
+                return sw;
+            }
+        }
+    }
+    return nullptr;
+}
+
+bool Room::areSwitchesActivated(int groupId) const {
+    if (groupId < 0) return true;  // No switches required
+    
+    // Check if all switches in this group are ON
+    bool foundAny = false;
+    for (Switch* sw : switches) {
+        if (sw && sw->getGroupId() == groupId) {
+            foundAny = true;
+            Point switchPos = sw->getPosition();
+            // Only count switches that are still on-screen
+            if (switchPos.getX() >= 0 && switchPos.getX() < SCREEN_WIDTH &&
+                switchPos.getY() >= 0 && switchPos.getY() < SCREEN_HEIGHT) {
+                if (!sw->getIsOn()) {
+                    return false;  // Found an OFF switch
+                }
+            }
+        }
+    }
+    
+    return foundAny;  // All switches are ON (or no switches in group)
 }
 
 bool Room::tryPushObstacle(Obstacle* obs, Direction dir) {

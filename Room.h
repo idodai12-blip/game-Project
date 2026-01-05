@@ -8,6 +8,7 @@
 #include "Bomb.h"
 #include "Obstacle.h"
 #include "Riddle.h"
+#include "Switch.h"
 #include "Player.h"
 #include <vector>
 #include <memory>
@@ -23,6 +24,7 @@ private:
     std::vector<Bomb*> bombs;
     std::vector<Obstacle*> obstacles;
     std::vector<Riddle*> riddles;
+    std::vector<Switch*> switches;
     
 public:
     Room(int id, bool finalRoom = false);
@@ -43,6 +45,9 @@ public:
     Door* getDoorAt(Point pos) const;
     Obstacle* getObstacleAt(Point pos) const;
     Riddle* getRiddleAt(Point pos) const;
+    Switch* getSwitchAt(Point pos) const;
+    
+    bool areSwitchesActivated(int groupId) const;
     
     void updateBombs();
     void explodeBomb(Bomb* bomb);

@@ -29,6 +29,7 @@ private:
     void checkCollisions();
     void checkDoors();
     void checkRiddles();
+    void checkSwitches();
     void drawGame();
     void showMenu();
     void showInstructions();
