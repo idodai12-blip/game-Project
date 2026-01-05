@@ -9,6 +9,7 @@
 #include "Obstacle.h"
 #include "Riddle.h"
 #include "Switch.h"
+#include "Spring.h"
 #include "Player.h"
 #include <vector>
 #include <memory>
@@ -25,6 +26,7 @@ private:
     std::vector<Obstacle*> obstacles;
     std::vector<Riddle*> riddles;
     std::vector<Switch*> switches;
+    std::vector<Spring*> springs;
     
 public:
     Room(int id, bool finalRoom = false);
@@ -46,6 +48,7 @@ public:
     Obstacle* getObstacleAt(Point pos) const;
     Riddle* getRiddleAt(Point pos) const;
     Switch* getSwitchAt(Point pos) const;
+    Spring* getSpringAt(Point pos) const;
     
     bool areSwitchesActivated(int groupId) const;
     

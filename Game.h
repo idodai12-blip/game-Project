@@ -30,6 +30,8 @@ private:
     void checkDoors();
     void checkRiddles();
     void checkSwitches();
+    void checkSprings();
+    void updateSpringEffects();
     void drawGame();
     void showMenu();
     void showInstructions();

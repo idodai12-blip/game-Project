@@ -9,7 +9,7 @@ private:
 public:
     Riddle(Point pos) : GameElement(pos, '?'), active(false) {}
     
-    bool canPlayerPass() const override { return false; }  // Cannot pass without solving
+    bool canPlayerPass() const override { return true; }  // Player can pass through after solving
     
     bool isActive() const { return active; }
     void setActive(bool isActive) { active = isActive; }

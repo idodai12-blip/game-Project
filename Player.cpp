@@ -3,7 +3,8 @@
 #include <iostream>
 
 Player::Player(Point pos, char sym) 
-    : position(pos), direction(Direction::NONE), symbol(sym), heldItem(nullptr) {}
+    : position(pos), direction(Direction::NONE), symbol(sym), heldItem(nullptr),
+      springDirection(Direction::NONE), springVelocity(0), springCyclesRemaining(0) {}
 
 GameElement* Player::disposeItem() {
     GameElement* item = heldItem;

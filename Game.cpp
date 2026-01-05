@@ -8,6 +8,7 @@
 #include "Obstacle.h"
 #include "Riddle.h"
 #include "Switch.h"
+#include "Spring.h"
 #include <iostream>
 
 Game::Game() 
@@ -92,6 +93,9 @@ void Game::createRooms() {
     room3->addElement(std::make_unique<Obstacle>(Point(20, 10)));
     room3->addElement(std::make_unique<Obstacle>(Point(30, 10)));
     room3->addElement(std::make_unique<Obstacle>(Point(40, 10)));
+    
+    // Add a horizontal spring (3 chars long, facing right)
+    room3->addElement(std::make_unique<Spring>(Point(10, 15), Direction::RIGHT, 3));
     
     // Items
     room3->addElement(std::make_unique<Key>(Point(50, 15)));
@@ -219,10 +223,99 @@ void Game::handlePlayerInput(Player* player, char key) {
 
 // UNIFIED: Updates a single player's position
 void Game::updatePlayer(Player* player, Player* otherPlayer) {
-    if (player->getDirection() == Direction::NONE) return;
+    Room* room = getCurrentRoom();
+    Direction moveDir = player->getDirection();
+    
+    // If under spring effect, use spring direction and velocity
+    if (player->isUnderSpringEffect()) {
+        Direction springDir = player->getSpringDirection();
+        int velocity = player->getSpringVelocity();
+        
+        // Check if player is trying to move backward against spring
+        Point backwardCheck = directionToPoint(springDir);
+        backwardCheck = Point(-backwardCheck.getX(), -backwardCheck.getY());
+        Point tryMove = directionToPoint(moveDir);
+        
+        // Ignore backward or stay commands
+        if (moveDir == Direction::NONE || 
+            (tryMove.getX() == backwardCheck.getX() && tryMove.getY() == backwardCheck.getY())) {
+            // Just use spring direction
+            moveDir = springDir;
+        } else {
+            // Allow lateral movement (perpendicular to spring)
+            // Spring moves in springDir, player can add lateral component
+            // For now, simplified: move in spring direction with lateral offset
+            Point springMove = directionToPoint(springDir);
+            Point lateralMove = directionToPoint(moveDir);
+            
+            // Move multiple times based on velocity
+            for (int v = 0; v < velocity; v++) {
+                Point nextPos = player->getPosition() + springMove;
+                
+                // Check if other player is there
+                if (nextPos == otherPlayer->getPosition()) {
+                    // Transfer spring effect to other player
+                    otherPlayer->setSpringEffect(springDir, velocity, player->getSpringVelocity() * player->getSpringVelocity());
+                    otherPlayer->stop();
+                    player->stop();
+                    return;
+                }
+                
+                // Check walkability
+                if (room->isPositionWalkable(nextPos) && room->getElementAt(nextPos) == nullptr) {
+                    player->setPosition(nextPos);
+                } else {
+                    // Hit obstacle, stop
+                    player->stop();
+                    player->clearSpringEffect();
+                    return;
+                }
+            }
+            
+            // Apply lateral movement (once)
+            if (moveDir != springDir && moveDir != Direction::NONE) {
+                Point nextLateral = player->getPosition() + lateralMove;
+                if (room->isPositionWalkable(nextLateral) && 
+                    room->getElementAt(nextLateral) == nullptr &&
+                    nextLateral != otherPlayer->getPosition()) {
+                    player->setPosition(nextLateral);
+                }
+            }
+            
+            return;
+        }
+        
+        // Move according to spring velocity
+        for (int v = 0; v < velocity; v++) {
+            Point nextPos = player->getPosition() + directionToPoint(springDir);
+            
+            // Check if other player is there
+            if (nextPos == otherPlayer->getPosition()) {
+                // Transfer spring effect to other player
+                otherPlayer->setSpringEffect(springDir, velocity, velocity * velocity);
+                otherPlayer->stop();
+                player->stop();
+                return;
+            }
+            
+            // Check walkability
+            if (room->isPositionWalkable(nextPos) && room->getElementAt(nextPos) == nullptr) {
+                player->setPosition(nextPos);
+            } else {
+                // Hit obstacle, stop
+                player->stop();
+                player->clearSpringEffect();
+                return;
+            }
+        }
+        
+        return;
+    }
+    
+    // Normal movement (no spring effect)
+    if (moveDir == Direction::NONE) return;
     
     Point nextPos = player->getNextPosition();
-    Room* room = getCurrentRoom();
     
     // Check if position has obstacle
     Obstacle* obs = room->getObstacleAt(nextPos);
@@ -340,6 +433,117 @@ void Game::checkSwitches() {
     }
 }
 
+void Game::checkSprings() {
+    Room* room = getCurrentRoom();
+    
+    // Check player 1
+    Spring* spring1 = room->getSpringAt(player1->getPosition());
+    if (spring1 && !player1->isUnderSpringEffect()) {
+        // Player stepped onto a spring
+        Direction springDir = spring1->getAlignment();
+        Direction playerDir = player1->getDirection();
+        
+        // Check if player is moving in the spring direction
+        if (playerDir == springDir) {
+            // Start compressing the spring
+            // Calculate how many spring chars the player will compress
+            Point springMove = directionToPoint(springDir);
+            int compressed = 0;
+            Point checkPos = player1->getPosition();
+            
+            // Count consecutive spring positions ahead
+            for (int i = 0; i < spring1->getLength(); i++) {
+                checkPos = checkPos + springMove;
+                if (spring1->isPartOfSpring(checkPos)) {
+                    compressed++;
+                } else {
+                    break;
+                }
+                
+                // Stop if hit a wall
+                if (room->isWall(checkPos)) {
+                    break;
+                }
+            }
+            
+            // Check if next position after spring compression is a wall or stay command
+            Point nextAfterSpring = player1->getPosition() + Point(springMove.getX() * (compressed + 1), 
+                                                                     springMove.getY() * (compressed + 1));
+            bool hitWall = room->isWall(nextAfterSpring);
+            
+            if (compressed > 0 && (hitWall || playerDir == Direction::NONE)) {
+                // Launch the player
+                int velocity = compressed;
+                int cycles = compressed * compressed;
+                player1->setSpringEffect(springDir, velocity, cycles);
+                spring1->release();
+            }
+        }
+    }
+    
+    // Check player 2
+    Spring* spring2 = room->getSpringAt(player2->getPosition());
+    if (spring2 && !player2->isUnderSpringEffect()) {
+        // Player stepped onto a spring
+        Direction springDir = spring2->getAlignment();
+        Direction playerDir = player2->getDirection();
+        
+        // Check if player is moving in the spring direction
+        if (playerDir == springDir) {
+            // Start compressing the spring
+            // Calculate how many spring chars the player will compress
+            Point springMove = directionToPoint(springDir);
+            int compressed = 0;
+            Point checkPos = player2->getPosition();
+            
+            // Count consecutive spring positions ahead
+            for (int i = 0; i < spring2->getLength(); i++) {
+                checkPos = checkPos + springMove;
+                if (spring2->isPartOfSpring(checkPos)) {
+                    compressed++;
+                } else {
+                    break;
+                }
+                
+                // Stop if hit a wall
+                if (room->isWall(checkPos)) {
+                    break;
+                }
+            }
+            
+            // Check if next position after spring compression is a wall or stay command
+            Point nextAfterSpring = player2->getPosition() + Point(springMove.getX() * (compressed + 1), 
+                                                                     springMove.getY() * (compressed + 1));
+            bool hitWall = room->isWall(nextAfterSpring);
+            
+            if (compressed > 0 && (hitWall || playerDir == Direction::NONE)) {
+                // Launch the player
+                int velocity = compressed;
+                int cycles = compressed * compressed;
+                player2->setSpringEffect(springDir, velocity, cycles);
+                spring2->release();
+            }
+        }
+    }
+}
+
+void Game::updateSpringEffects() {
+    // Decrement spring cycles for both players
+    if (player1->isUnderSpringEffect()) {
+        player1->decrementSpringCycles();
+        if (!player1->isUnderSpringEffect()) {
+            player1->clearSpringEffect();
+        }
+    }
+    
+    if (player2->isUnderSpringEffect()) {
+        player2->decrementSpringCycles();
+        if (!player2->isUnderSpringEffect()) {
+            player2->clearSpringEffect();
+        }
+    }
+}
+
 void Game::checkRiddles() {
     Room* room = getCurrentRoom();
     
@@ -443,8 +647,10 @@ void Game::startNewGame() {
             checkSwitches();
             checkCollisions();
             checkDoors();
+            checkSprings();
             checkRiddles();
             getCurrentRoom()->updateBombs();
+            updateSpringEffects();
         }
         
         // Draw

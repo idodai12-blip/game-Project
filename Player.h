@@ -10,6 +10,11 @@ private:
     char symbol;
     GameElement* heldItem;  // Non-owning pointer
     
+    // Spring acceleration state
+    Direction springDirection;
+    int springVelocity;
+    int springCyclesRemaining;
+    
 public:
     Player(Point pos, char sym);
     
@@ -28,6 +33,26 @@ public:
     GameElement* getHeldItem() const { return heldItem; }
     void pickUpItem(GameElement* item) { heldItem = item; }
     GameElement* disposeItem();
+    
+    // Spring acceleration methods
+    bool isUnderSpringEffect() const { return springCyclesRemaining > 0; }
+    Direction getSpringDirection() const { return springDirection; }
+    int getSpringVelocity() const { return springVelocity; }
+    void setSpringEffect(Direction dir, int velocity, int cycles) {
+        springDirection = dir;
+        springVelocity = velocity;
+        springCyclesRemaining = cycles;
+    }
+    void clearSpringEffect() {
+        springVelocity = 0;
+        springCyclesRemaining = 0;
+        springDirection = Direction::NONE;
+    }
+    void decrementSpringCycles() {
+        if (springCyclesRemaining > 0) {
+            springCyclesRemaining--;
+        }
+    }
     
     void draw() const;
 };

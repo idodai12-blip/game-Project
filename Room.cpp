@@ -25,6 +25,8 @@ void Room::addElement(std::unique_ptr<GameElement> element) {
         riddles.push_back(riddle);
     } else if (Switch* sw = dynamic_cast<Switch*>(rawPtr)) {
         switches.push_back(sw);
+    } else if (Spring* spring = dynamic_cast<Spring*>(rawPtr)) {
+        springs.push_back(spring);
     }
 }
 
@@ -143,6 +145,20 @@ bool Room::areSwitchesActivated(int groupId) const {
     }
     
     return foundAny;  // All switches are ON (or no switches in group)
+}
+
+Spring* Room::getSpringAt(Point pos) const {
+    for (Spring* spring : springs) {
+        if (spring && spring->isPartOfSpring(pos)) {
+            // Check if spring is on-screen (not destroyed)
+            Point springPos = spring->getPosition();
+            if (springPos.getX() >= 0 && springPos.getX() < SCREEN_WIDTH &&
+                springPos.getY() >= 0 && springPos.getY() < SCREEN_HEIGHT) {
+                return spring;
+            }
+        }
+    }
+    return nullptr;
 }
 
 bool Room::tryPushObstacle(Obstacle* obs, Direction dir) {
