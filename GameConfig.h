@@ -6,6 +6,7 @@
 // Screen constants
 const int SCREEN_WIDTH = 80;
 const int SCREEN_HEIGHT = 25;
+const int SCREEN_OFFSET_Y = 3;  // Game area starts 3 lines down
 const int GAME_CYCLE_DELAY = 120;
 
 // Player control keys

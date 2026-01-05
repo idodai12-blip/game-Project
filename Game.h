@@ -16,12 +16,13 @@ private:
     std::unique_ptr<Player> player1;
     std::unique_ptr<Player> player2;
     std::vector<std::unique_ptr<Room>> rooms;
+    std::vector<Point> legendPositions;  // Legend position for each room
     int currentRoomIndex;
     bool player1ReachedEnd;
     bool player2ReachedEnd;
     GameState state;
     
-    void createRooms();
+    void loadRoomsFromFiles();
     void handlePlayerInput(Player* player, char key);  // Unified for both players
     void updatePlayer(Player* player, Player* otherPlayer);  // Unified for both players
     void checkCollisions();
