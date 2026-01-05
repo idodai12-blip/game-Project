@@ -1,6 +1,5 @@
 #pragma once
 #include "GameElement.h"
-#include <vector>
 
 class Switch;  // Forward declaration
 

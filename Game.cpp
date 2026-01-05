@@ -261,7 +261,7 @@ void Game::updatePlayer(Player* player, Player* otherPlayer) {
                 // Check if other player is there
                 if (nextPos == otherPlayer->getPosition()) {
                     // Transfer spring effect to other player
-                    otherPlayer->setSpringEffect(springDir, velocity, player->getSpringVelocity() * player->getSpringVelocity());
+                    otherPlayer->setSpringEffect(springDir, velocity, velocity * velocity);
                     otherPlayer->stop();
                     player->stop();
                     return;
